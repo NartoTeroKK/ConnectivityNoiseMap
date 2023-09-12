@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    tools:context=".MainActivity">
+
+    <include layout="@layout/content_main" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/action_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="@dimen/fab_margin"
+        android:layout_marginBottom="72dp"
+        android:contentDescription="@string/action"
+        app:srcCompat="@drawable/ic_troubleshoot" />
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottom_navigation"
+        style="@style/Base.Theme.ConnectivityNoiseMap"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:minHeight="56dp"
+        app:elevation="5dp"
+        app:itemBackground="@color/design_default_color_primary_dark"
+        app:itemIconTint="@android:color/system_accent3_800"
+        app:itemTextColor="@android:color/holo_purple"
+        app:labelVisibilityMode="labeled"
+        app:menu="@menu/bottom_navigation_menu" />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

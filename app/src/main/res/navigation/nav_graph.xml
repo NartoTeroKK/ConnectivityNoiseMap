@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/homeFragment">
+
+        <fragment
+            android:id="@+id/homeFragment"
+            android:name="com.example.connectivitynoisemap.HomeFragment"
+            android:label="Home"
+            tools:layout="@layout/fragment_home" />
+
+        <fragment
+            android:id="@+id/mobileNetworkFragment"
+            android:name="com.example.connectivitynoisemap.MobileNetworkFragment"
+            android:label="Mobile Network"
+            tools:layout="@layout/fragment_mobile_network" />
+
+        <fragment
+            android:id="@+id/wifiFragment"
+            android:name="com.example.connectivitynoisemap.WifiFragment"
+            android:label="Wi-Fi"
+            tools:layout="@layout/fragment_wifi" />
+
+        <fragment
+            android:id="@+id/noiseFragment"
+            android:name="com.example.connectivitynoisemap.NoiseFragment"
+            android:label="Noise"
+            tools:layout="@layout/fragment_noise" />
+
+</navigation>

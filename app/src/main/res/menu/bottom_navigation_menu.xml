@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/home"
+        android:icon="@drawable/ic_baseline_home"
+        android:title="@string/home" />
+    <item
+        android:id="@+id/mobile_network"
+        android:icon="@drawable/ic_baseline_mobile_network"
+        android:title="@string/mobile"/>
+    <item
+        android:id="@+id/wifi"
+        android:icon="@drawable/ic_baseline_wifi"
+        android:title="@string/wifi"/>
+    <item
+        android:id="@+id/noise"
+        android:icon="@drawable/ic_baseline_noise"
+        android:title="@string/noise"/>
+
+</menu>
