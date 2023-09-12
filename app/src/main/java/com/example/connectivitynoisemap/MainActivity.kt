@@ -11,6 +11,10 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.fragment.app.Fragment
 import com.example.connectivitynoisemap.databinding.ActivityMainBinding
+import com.example.connectivitynoisemap.fragments.HomeFragment
+import com.example.connectivitynoisemap.fragments.MobileNetworkFragment
+import com.example.connectivitynoisemap.fragments.NoiseFragment
+import com.example.connectivitynoisemap.fragments.WifiFragment
 import com.google.android.material.snackbar.Snackbar
 
 class MainActivity : AppCompatActivity() {
@@ -26,12 +30,6 @@ class MainActivity : AppCompatActivity() {
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-        //val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment_content_main) as NavHostFragment
-        //val navController = navHostFragment.navController
-
-        //val navController: NavController = findNavController(R.id.nav_host_fragment_content_main)
-        //navController.setGraph(R.id.nav_graph)
 
         val bottomNav = binding.bottomNavigation
         bottomNav.selectedItemId = R.id.homeFragment
@@ -88,32 +86,23 @@ class MainActivity : AppCompatActivity() {
         // Create the object of AlertDialog Builder class
         val builder = AlertDialog.Builder(this)
 
-        // Set the message show for the Alert time
-        builder.setMessage("If you want to use this App you have to grant microphone permission. You up for that?")
+        builder.setMessage("If you want to use this app you must grant microphone permission. \nYou up for that?")
 
-        // Set Alert Title
-        builder.setTitle("Mic Permission")
-
+        builder.setTitle("Microphone permission")
         // Set Cancelable false for when the user clicks on the outside the Dialog Box then it will remain show
         builder.setCancelable(false)
 
-        // Set the positive button with yes name Lambda OnClickListener method is use of DialogInterface interface.
         builder.setPositiveButton("Yes") {
-            // If user click no then dialog box is canceled.
+            // If user click yes then ap request again the mic permission
             dialog, which -> dialog.cancel()
             this.requestMicPermission()
-
         }
 
-        // Set the Negative button with No name Lambda OnClickListener method is use of DialogInterface interface.
         builder.setNegativeButton("No") {
-            // When the user click no button then app will close
+            // If the user click no button then app will close
             dialog, which -> finish()
         }
-
-        // Create the Alert dialog
         val alertDialog = builder.create()
-        // Show the Alert Dialog box
         alertDialog.show()
     }
 

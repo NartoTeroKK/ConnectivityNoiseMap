@@ -1,4 +1,4 @@
-package com.example.connectivitynoisemap
+package com.example.connectivitynoisemap.fragments
 
 import android.content.Context
 import android.os.Bundle
@@ -8,7 +8,9 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.ViewModelProvider
+import com.example.connectivitynoisemap.utilities.ActivityLifecycleObserver
 import com.example.connectivitynoisemap.databinding.FragmentHomeBinding
+import com.example.connectivitynoisemap.fragments.VM.HomeViewModel
 
 /**
  * A simple [Fragment] subclass.
@@ -35,13 +37,14 @@ class HomeFragment : Fragment(), LifecycleObserver {
     ): View ? {
         // Inflate the layout for this fragment
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
+        viewModel.setBinding(this.binding)
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        viewModel.loadBgImage(binding,this)
+        viewModel.loadBgImage(this)
     }
 
     override fun onAttach(context: Context) {

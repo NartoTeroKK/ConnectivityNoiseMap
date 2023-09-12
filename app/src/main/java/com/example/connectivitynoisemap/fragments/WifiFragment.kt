@@ -1,4 +1,4 @@
-package com.example.connectivitynoisemap
+package com.example.connectivitynoisemap.fragments
 
 import android.content.Context
 import android.os.Bundle
@@ -7,32 +7,35 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import com.example.connectivitynoisemap.databinding.FragmentMobileNetworkBinding
+import com.example.connectivitynoisemap.utilities.ActivityLifecycleObserver
+import com.example.connectivitynoisemap.databinding.FragmentWifiBinding
+import com.example.connectivitynoisemap.fragments.VM.WifiViewModel
 
-class MobileNetworkFragment : Fragment() {
+class WifiFragment : Fragment() {
 
     companion object {
-        fun newInstance() = MobileNetworkFragment()
+        fun newInstance() = WifiFragment()
     }
 
-    var _binding: FragmentMobileNetworkBinding? = null
+    var _binding: FragmentWifiBinding? = null
     // This property is only valid between onCreateView and onDestroyView.
     private val binding get() = _binding!!
 
-    private lateinit var viewModel: MobileNetworkViewModel
+    private lateinit var viewModel: WifiViewModel
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        _binding = FragmentMobileNetworkBinding.inflate(inflater, container, false)
+        _binding = FragmentWifiBinding.inflate(inflater, container, false)
+        viewModel.setBinding(this.binding)
         return binding.root
     }
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
         activity?.lifecycle?.addObserver(ActivityLifecycleObserver {
-            viewModel = ViewModelProvider(this).get(MobileNetworkViewModel::class.java)
+            viewModel = ViewModelProvider(this).get(WifiViewModel::class.java)
             // TODO: Use the ViewModel
         })
     }

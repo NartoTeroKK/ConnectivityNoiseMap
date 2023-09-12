@@ -7,25 +7,25 @@
 
         <fragment
             android:id="@+id/homeFragment"
-            android:name="com.example.connectivitynoisemap.HomeFragment"
+            android:name="com.example.connectivitynoisemap.fragments.HomeFragment"
             android:label="Home"
             tools:layout="@layout/fragment_home" />
 
         <fragment
             android:id="@+id/mobileNetworkFragment"
-            android:name="com.example.connectivitynoisemap.MobileNetworkFragment"
+            android:name="com.example.connectivitynoisemap.fragments.MobileNetworkFragment"
             android:label="Mobile Network"
             tools:layout="@layout/fragment_mobile_network" />
 
         <fragment
             android:id="@+id/wifiFragment"
-            android:name="com.example.connectivitynoisemap.WifiFragment"
+            android:name="com.example.connectivitynoisemap.fragments.WifiFragment"
             android:label="Wi-Fi"
             tools:layout="@layout/fragment_wifi" />
 
         <fragment
             android:id="@+id/noiseFragment"
-            android:name="com.example.connectivitynoisemap.NoiseFragment"
+            android:name="com.example.connectivitynoisemap.fragments.NoiseFragment"
             android:label="Noise"
             tools:layout="@layout/fragment_noise" />
 

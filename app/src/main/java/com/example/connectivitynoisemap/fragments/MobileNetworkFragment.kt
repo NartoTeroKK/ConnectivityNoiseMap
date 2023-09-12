@@ -1,4 +1,4 @@
-package com.example.connectivitynoisemap
+package com.example.connectivitynoisemap.fragments
 
 import android.content.Context
 import android.os.Bundle
@@ -7,32 +7,35 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import com.example.connectivitynoisemap.databinding.FragmentNoiseBinding
+import com.example.connectivitynoisemap.utilities.ActivityLifecycleObserver
+import com.example.connectivitynoisemap.databinding.FragmentMobileNetworkBinding
+import com.example.connectivitynoisemap.fragments.VM.MobileNetworkViewModel
 
-class NoiseFragment : Fragment() {
+class MobileNetworkFragment : Fragment() {
 
     companion object {
-        fun newInstance() = NoiseFragment()
+        fun newInstance() = MobileNetworkFragment()
     }
 
-    var _binding: FragmentNoiseBinding? = null
+    var _binding: FragmentMobileNetworkBinding? = null
     // This property is only valid between onCreateView and onDestroyView.
     private val binding get() = _binding!!
 
-    private lateinit var viewModel: NoiseViewModel
+    private lateinit var viewModel: MobileNetworkViewModel
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        _binding = FragmentNoiseBinding.inflate(inflater, container, false)
+        _binding = FragmentMobileNetworkBinding.inflate(inflater, container, false)
+        viewModel.setBinding(this.binding)
         return binding.root
     }
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
         activity?.lifecycle?.addObserver(ActivityLifecycleObserver {
-            viewModel = ViewModelProvider(this).get(NoiseViewModel::class.java)
+            viewModel = ViewModelProvider(this).get(MobileNetworkViewModel::class.java)
             // TODO: Use the ViewModel
         })
     }
