@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".fragments.HomeFragment">
+    tools:context=".main.fragments.HomeFragment">
 
 
     <ImageView
@@ -28,9 +28,11 @@
             android:text="@string/app_title"
             android:textAlignment="center"
             android:textAppearance="@style/TextAppearance.AppCompat.Display1"
+            android:textSize="40sp"
             android:textStyle="bold"
             app:layout_constraintBottom_toTopOf="@+id/linearLayout2"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
@@ -41,49 +43,33 @@
             android:orientation="vertical"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.5">
 
             <Button
-                android:id="@+id/btnMobileNetwork"
+                android:id="@+id/btnManual"
                 style="@style/Widget.Material3.Button"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
+                android:fontFamily="sans-serif"
                 android:paddingTop="10dp"
                 android:paddingBottom="10dp"
-                android:text="@string/mobile_network"
-                android:textSize="24sp" />
-
-            <Button
-                android:id="@+id/btnWifi"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
-                android:paddingTop="10dp"
-                android:paddingBottom="10dp"
-                android:text="@string/wifi"
-                android:textSize="24sp" />
-
-            <Button
-                android:id="@+id/btnNoise"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
-                android:paddingTop="10dp"
-                android:paddingBottom="10dp"
-                android:text="@string/noise"
-                android:textSize="24sp" />
+                android:text="@string/app_manual"
+                android:textSize="30sp" />
 
             <Button
                 android:id="@+id/btnSettings"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:fontFamily="sans-serif"
                 android:paddingTop="10dp"
                 android:paddingBottom="10dp"
                 android:text="@string/settings"
-                android:textSize="24sp" />
+                android:textSize="30sp" />
         </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-</FrameLayout>
+</FrameLayout >
