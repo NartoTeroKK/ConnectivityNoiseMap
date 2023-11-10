@@ -9,7 +9,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.lifecycleScope
 import com.example.connectivitynoisemap.MeasurementApplication
 import com.example.connectivitynoisemap.data.MeasurementViewModel
@@ -21,11 +21,13 @@ import com.example.connectivitynoisemap.main.fragments.viewmodels.FragmentViewMo
 import com.example.connectivitynoisemap.main.fragments.viewmodels.WifiViewModel
 import com.example.connectivitynoisemap.main.interfaces.MeasurementFragmentInterface
 import com.example.connectivitynoisemap.main.module.implementation.MapHandler
-import com.example.connectivitynoisemap.main.module.implementation.MapHandlerViewModel
 import com.example.connectivitynoisemap.main.module.implementation.OnMapLoaded
 import com.example.connectivitynoisemap.main.utils.GUI
+import com.example.connectivitynoisemap.main.utils.MapUtils
 import com.example.connectivitynoisemap.main.utils.ValueClass
+import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.launch
+import mil.nga.mgrs.MGRS
 
 
 class WifiFragment :
@@ -51,19 +53,22 @@ class WifiFragment :
         }
 
     private val mapHandler: MapHandler by lazy {
-        ViewModelProvider(activity)[MapHandlerViewModel::class.java].mapHandler
+        activity.mapHandlerViewModel.mapHandler
     }
+    private val currentLatLng: LiveData<LatLng>
+    by lazy { mapHandler.currentLatLng }
 
-    private val dataType: DataType = DataType.WIFI
+    private val currentGridSquare : Map<String, MGRS>
+        get() {
+            return MapUtils.getGridSquare(MapUtils.latLngToMgrs(currentLatLng.value!!))
+        }
     private val isLocationPermGranted: Boolean
         get() = activity.isLocationPermGranted
-    private val buttonState
-        get() = activity.buttonState
 
     override val activity: MainActivity
         get() = requireActivity() as MainActivity
 
-    override val fId: Int by lazy { dataType.ordinal }
+    override val dataType: DataType = DataType.WIFI
 
     // METHODS
 
@@ -82,37 +87,48 @@ class WifiFragment :
     ): View {
         _binding = FragmentWifiBinding.inflate(inflater, container, false)
 
-        // Clear the map from all the squares if the map is ready
-        /*
-        if(mapHandler.isMapReady) {
-            mapHandler.drawMapSquares(dataType)
-        }else
-        */
-        mapHandler.setOnMapLoadedListener(this)
 
+        // Set onMapReady() called in MapHandler Listener
+        mapHandler.setOnMapLoadedListener(this)
         // Set the mapView of the MapHandler
         val mapView = binding.mapViewContainer.mapView
         mapHandler.setMapView(mapView, savedInstanceState)
-
-
-        // Enable the action button or wait for the timer to finish
-        if (buttonState.value!!)
-            activity.enableActionBtn(true)
-        else{
-            activity.enableActionBtn(false)
+        /*
+        currentLatLng.observe(viewLifecycleOwner){ latLng ->
+            if(latLng != null){
+                val gridSquare = MapUtils.getGridSquare(MapUtils.latLngToMgrs(latLng))
+                val stateData = activity.getButtonState(dataType, gridSquare)
+                stateData.observe(viewLifecycleOwner){ state ->
+                    if(activity.isBgOperationEnabledSP) {
+                        if (state)
+                            this.measureValue()
+                    }else
+                        activity.enableActionBtn(state)
+                }
+            }
         }
-        buttonState.observe(viewLifecycleOwner) { state ->
-            if (state == true)
-                activity.enableActionBtn(true)
+
+        if (currentLatLng.value != null) {
+            val stateData = activity.getButtonState(dataType, currentGridSquare)
+            stateData.observe(viewLifecycleOwner) { state ->
+                if(activity.isBgOperationEnabledSP) {
+                    if (state)
+                        this.measureValue()
+                }else
+                    activity.enableActionBtn(state)
+            }
         }
+        */
+
 
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        // Show the action button
-        activity.showActionBtn(true)
+        // Show the action button if background operations are disabled
+        if(!activity.isBgOperationEnabledSP)
+            activity.showActionBtn(true)
     }
 
     override fun onResume() {
@@ -139,9 +155,6 @@ class WifiFragment :
     }
 
     override fun measureValue() {
-        // Temporarily disable the action button
-        activity.tempDisableActionBtn(fId)
-        activity.enableActionBtn(false)
 
         // Wifi signal strength measurement
         val wifiRssi = fragmentViewModel.wifiRssi
@@ -153,18 +166,26 @@ class WifiFragment :
                 GUI.showToast(requireContext(), "Enable Wi-Fi on your device")
             }
             else -> {
-                val latLngData = mapHandler.currentLatLng
+                val latLngData = currentLatLng
 
                 latLngData.observe(viewLifecycleOwner) { latLng ->
                     if(latLng != null) {
                         latLngData.removeObservers(viewLifecycleOwner)
 
                         lifecycleScope.launch {
-                            val (remainingMeasurements, gridSquare) =
+
+                            val gridSquare = MapUtils.getGridSquare(MapUtils.latLngToMgrs(latLng))
+                            // Temporarily disable the action button
+                            activity.tempDisableActionBtn(
+                                dataType,
+                                gridSquare
+                            )
+
+                            val remainingMeasurements =
                                 measurementViewModel.saveData(
                                     wifiRssi,
                                     latLng,
-                                    activity.minNumMeasurementsSharedPref
+                                    activity.numMeasurementsSP
                                 )
                             if(remainingMeasurements > 0){
                                 GUI.showToast(
@@ -172,22 +193,27 @@ class WifiFragment :
                                     "$remainingMeasurements measurements remaining",
                                     Toast.LENGTH_SHORT
                                 )
-                            }
-                            else{
+                            } else { // remainingMeasurements <= 0
                                 // Process the data inserted
                                 GUI.showToast(
                                     requireContext(),
-                                    "Processing Data...",
+                                    "Measurement completed",
                                     Toast.LENGTH_SHORT
                                 )
                                 val avgValue =
                                     if(remainingMeasurements == 0)
                                     // Process the data in order to create the map square
                                     // for the first time in that grid square
-                                        measurementViewModel.processDataAndCreateSquare(gridSquare)
+                                        measurementViewModel.processDataAndCreateSquare(
+                                            gridSquare,
+                                            activity.numMeasurementsSP
+                                        )
                                     else
                                     // map square already exists: already processed data inserted
-                                        measurementViewModel.getAvgValue(gridSquare)
+                                        measurementViewModel.getAvgValue(
+                                            gridSquare,
+                                            activity.numMeasurementsSP
+                                        )
 
                                 val signalClass =
                                     ValueClass.fromValueToClass(dataType, avgValue)

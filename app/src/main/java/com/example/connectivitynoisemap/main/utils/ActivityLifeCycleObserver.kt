@@ -1,4 +1,4 @@
-package com.example.connectivitynoisemap.utilities
+package com.example.connectivitynoisemap.main.utils
 
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner

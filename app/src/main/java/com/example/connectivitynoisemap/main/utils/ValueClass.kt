@@ -19,7 +19,7 @@ class ValueClass {
 
         fun fromClassToColor(valueClass: Enum<*>) : Int{
             val red = Color.argb(60,255, 0, 0)
-            val orange = Color.argb(60,255, 165, 0)
+            val orange = Color.argb(60,255, 128, 0)
             val yellow = Color.argb(60,255, 255, 0)
             val green = Color.argb(60,0, 255, 0)
 

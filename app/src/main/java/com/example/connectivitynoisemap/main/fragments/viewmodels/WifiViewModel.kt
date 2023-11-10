@@ -22,7 +22,7 @@ class WifiViewModel : ViewModel() {
         if(wifiManager.isWifiEnabled){
             val wifiInfo: WifiInfo? = wifiManager.connectionInfo
 
-            if (wifiInfo != null && wifiInfo.bssid != null) {
+            if ((wifiInfo != null) && (wifiInfo.bssid != null)) {
                 return wifiInfo.rssi
             }
         }else{

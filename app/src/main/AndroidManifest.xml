@@ -23,15 +23,15 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.ConnectivityNoiseMap"
         tools:targetApi="31">
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="@string/google_maps_key" />
         <activity
             android:name=".app_manual.AppManualActivity"
             android:exported="false"
             android:label="@string/title_activity_app_manual"
             android:theme="@style/Theme.ConnectivityNoiseMap" />
 
-        <meta-data
-            android:name="com.google.android.geo.API_KEY"
-            android:value="@string/google_maps_key" />
 
         <activity
             android:name=".settings.SettingsActivity"

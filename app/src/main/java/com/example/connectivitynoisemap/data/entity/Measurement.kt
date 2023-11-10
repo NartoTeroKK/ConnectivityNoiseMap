@@ -3,7 +3,7 @@ package com.example.connectivitynoisemap.data.entity
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.example.connectivitynoisemap.data.type.DataType
-import com.example.connectivitynoisemap.main.module.implementation.MapHandler
+import com.example.connectivitynoisemap.main.utils.MapUtils.Companion.mgrsToLatLng
 import com.google.android.gms.maps.model.LatLng
 import mil.nga.mgrs.MGRS
 
@@ -16,6 +16,7 @@ data class Measurement(
     val seCorner: String,
     val value: Double,
     val processed: Boolean = false,
+    val timestamp: Long,
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
 )
@@ -38,6 +39,14 @@ data class CornersAvgValue(
 
     private fun mgrsStringToLatLng(mgrsString: String): LatLng{
         val mgrs = MGRS.parse(mgrsString)
-        return MapHandler.mgrsToLatLng(mgrs)
+        return mgrsToLatLng(mgrs)
     }
 }
+
+data class CornersCount(
+    val neCorner: String,
+    val nwCorner: String,
+    val swCorner: String,
+    val seCorner: String,
+    val count: Int
+)

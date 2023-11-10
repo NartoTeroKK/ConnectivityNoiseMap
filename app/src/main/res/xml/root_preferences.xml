@@ -50,14 +50,17 @@
             app:summary="@string/num_minutes_summary"
             app:title="@string/num_minutes_title" />
 
-        <SwitchPreferenceCompat
-            app:key="@string/bg_operation_key"
-            app:defaultValue="false"
-            app:title="@string/bg_operation"
-            app:summaryOn="@string/bg_operation_on"
-            app:summaryOff="@string/bg_operation_off"
-            />
-
     </PreferenceCategory>
+
+    <PreferenceCategory app:title="@string/bg_op_settings">
+        <SwitchPreferenceCompat
+            app:defaultValue="false"
+            app:key="@string/bg_operation_key"
+            app:singleLineTitle="false"
+            app:summaryOff="@string/bg_operation_off"
+            app:summaryOn="@string/bg_operation_on"
+            app:title="@string/bg_operation" />
+    </PreferenceCategory>
+
 
 </PreferenceScreen>

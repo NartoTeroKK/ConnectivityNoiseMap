@@ -1,10 +1,12 @@
 package com.example.connectivitynoisemap.main
 
 import android.Manifest
-import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.os.CountDownTimer
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
+import android.view.View
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -17,10 +19,12 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
+import androidx.preference.PreferenceManager
 import com.example.connectivitynoisemap.MeasurementApplication
 import com.example.connectivitynoisemap.R
 import com.example.connectivitynoisemap.data.MeasurementViewModel
 import com.example.connectivitynoisemap.data.MeasurementViewModelFactory
+import com.example.connectivitynoisemap.data.entity.CornersAvgValue
 import com.example.connectivitynoisemap.data.type.DataType
 import com.example.connectivitynoisemap.databinding.ActivityMainBinding
 import com.example.connectivitynoisemap.main.fragments.HomeFragment
@@ -30,13 +34,19 @@ import com.example.connectivitynoisemap.main.module.MapModule
 import com.example.connectivitynoisemap.main.module.MapModuleImpl
 import com.example.connectivitynoisemap.main.module.implementation.MapHandlerViewModel
 import com.example.connectivitynoisemap.main.module.implementation.MapHandlerViewModelFactory
+import com.example.connectivitynoisemap.main.utils.MapUtils.Companion.getGridSquare
+import com.example.connectivitynoisemap.main.utils.MapUtils.Companion.latLngToMgrs
+import com.example.connectivitynoisemap.main.utils.MapUtils.Companion.toGridSquareString
 import com.example.connectivitynoisemap.main.utils.ValueClass
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import mil.nga.mgrs.MGRS
 
 class MainActivity : AppCompatActivity() {
 
@@ -61,41 +71,40 @@ class MainActivity : AppCompatActivity() {
             Manifest.permission.ACCESS_COARSE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
     }
-    // Floating Action Button state
-    private val fragmentTimers =
-        mutableMapOf<Int, CountDownTimer>()
+    // Floating Action Button and background operation state
 
-    private val _buttonStateLiveData =
-        mutableMapOf<Int, MutableLiveData<Boolean>>()
-        init{
-            val dataTypes =
-                DataType.values()
+    private val _enablingState =
+        mutableListOf<MutableMap <Map <String, String>, MutableLiveData<Boolean> >>()
 
-            dataTypes.forEach { dataType ->
-                _buttonStateLiveData[dataType.ordinal] = MutableLiveData(true)
-            }
-        }
-    val buttonState: LiveData<Boolean>
-        get() {
-            val activeFragment = activeFragment() as MeasurementFragmentInterface
-            return _buttonStateLiveData[activeFragment.fId]!!
-        }
     // Shared Preferences
-    private val disableTimeSharedPref: Long by lazy {
-        100
-        /*
-        this.getPreferences(Context.MODE_PRIVATE)
-            .getInt("num_minutes", 1)
-            .toLong() * 60 * 1000
-         */
-    }
-    val minNumMeasurementsSharedPref: Int by lazy {
-        this.getPreferences(Context.MODE_PRIVATE)
-            .getInt("num_measurements", 3)
-    }
+
+    private val disableTimeSP: Long
+        get() {
+            return PreferenceManager.getDefaultSharedPreferences(this)
+                .getInt("num_minutes", 1)
+                .toLong() * 60 * 1000
+        }
+    val numMeasurementsSP: Int
+        get(){
+            return PreferenceManager.getDefaultSharedPreferences(this)
+                .getInt("num_measurements", 5)
+        }
+
+    val isBgOperationEnabledSP: Boolean
+        get(){
+            return PreferenceManager.getDefaultSharedPreferences(this)
+                .getBoolean("bg_operation", false)
+        }
+    val noiseMeasurementTimeSP: Long
+        get(){
+            return PreferenceManager.getDefaultSharedPreferences(this)
+                .getInt("noise_measuring_time", 5)
+                .toLong() * 1000
+        }
 
     // Map Module
     private var isMapHandlerInitialized: Boolean = false
+    lateinit var mapHandlerViewModel: MapHandlerViewModel
 
     companion object{
         lateinit var mapModule: MapModule
@@ -103,6 +112,16 @@ class MainActivity : AppCompatActivity() {
 
     val mapSquareWithColorList: MutableList< MutableMap <Map <String, LatLng>, Int>>
         = mutableListOf()
+
+    init{
+        val dataTypes =
+            DataType.values()
+
+        dataTypes.forEach { dataType ->
+            _enablingState.add(dataType.ordinal, mutableMapOf())
+            mapSquareWithColorList.add(dataType.ordinal, mutableMapOf())
+        }
+    }
 
     // METHODS
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -113,7 +132,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         // Generate map squares for all fragments
-        lifecycleScope.launch(Dispatchers.IO) {
+        lifecycleScope.launch {
             generateMapSquares()
         }
         // setup bottom navigation bar with navigation controller
@@ -121,24 +140,15 @@ class MainActivity : AppCompatActivity() {
         bottomNav.setupWithNavController(navController)
         //
 
-        navController.addOnDestinationChangedListener{  _, destination, _ ->
-            if((destination.id == R.id.mobileNetworkFragment
-                || destination.id == R.id.wifiFragment
-                || destination.id == R.id.noiseFragment
-                ) && !isMapHandlerInitialized
-            ) {
-                // MapModule and MapHandlerViewModel initialization
-                mapModule = MapModuleImpl(this)
+        // MapModule and MapHandlerViewModel initialization
+        mapModule = MapModuleImpl(this)
 
-                ViewModelProvider(
-                    this,
-                    MapHandlerViewModelFactory(mapModule.mapHandler)
-                )[MapHandlerViewModel::class.java]
+        mapHandlerViewModel = ViewModelProvider(
+            this,
+            MapHandlerViewModelFactory(mapModule.mapHandler)
+        )[MapHandlerViewModel::class.java]
 
-                isMapHandlerInitialized = true
-            }
-
-        }
+        isMapHandlerInitialized = true
 
         // Hide the action button because the start destination is HomeFragment
         showActionBtn(false)
@@ -154,10 +164,10 @@ class MainActivity : AppCompatActivity() {
                             activeFragment.requireContext(),
                             activeFragment.requireView(),
                             "Recording acoustic noise...",
-                            Snackbar.LENGTH_SHORT
+                            noiseMeasurementTimeSP.toInt()
                         )
                         .setAnchorView(binding.actionButton)
-                        .setAnimationMode(Snackbar.ANIMATION_MODE_SLIDE)
+                        .setAnimationMode(Snackbar.ANIMATION_MODE_FADE)
                         .show()
                     }
                 }
@@ -169,6 +179,21 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+
+        // Observe the state on the active fragment
+        observeState()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Log.d("BG OPERATIONS","Background operations enabled: $isBgOperationEnabledSP")
+    }
+
+    override fun onRestart() {
+        super.onRestart()
+        lifecycleScope.launch {
+            generateMapSquares()
+        }
     }
 
     override fun onDestroy() {
@@ -176,42 +201,88 @@ class MainActivity : AppCompatActivity() {
         mapModule.mapHandler.onDestroy()
     }
 
-    private suspend fun generateMapSquares() =
-    withContext(Dispatchers.IO){
+    private suspend fun generateMapSquares() {
         // MeasurementViewModel to access Room query
         val measurementViewModel : MeasurementViewModel
-        by viewModels {
-            MeasurementViewModelFactory(
-                (application as MeasurementApplication).repository,
-                null
-            )
-        }
-        for (dataType in DataType.values()){
-            val roomJob = async {
-                measurementViewModel.avgValueByDataTypeGroupBySquare(
-                    dataType = dataType
-                )
-            }
-            val data = roomJob.await()
-            for (entry in data){
-                val color =
-                    ValueClass.fromClassToColor(
-                        ValueClass.fromValueToClass(
-                            dataType,
-                            entry.avgValue
-                        )
+                by viewModels {
+                    MeasurementViewModelFactory(
+                        (application as MeasurementApplication).repository,
+                        null
                     )
-                val mapSquare = entry.toCornersLatLngMap()
+                }
+        withContext(Dispatchers.IO){
+            for (dataType in DataType.values()){
 
-                val mutableMapForType = mapSquareWithColorList.getOrNull(dataType.ordinal)
-                    ?: run {
-                        mapSquareWithColorList.add(dataType.ordinal, mutableMapOf(mapSquare to 0))
-                        mapSquareWithColorList[dataType.ordinal]
-                    }
-                mutableMapForType[mapSquare] = color
+                processOrDeprocessData(measurementViewModel, dataType)
+
+                val cornersAvgValueList = async {
+                    measurementViewModel.avgValueByDataTypeGroupBySquare(
+                        dataType = dataType,
+                        numMeasurements = numMeasurementsSP,
+                        processed = true
+                    )
+                }.await()
+                for (entry in cornersAvgValueList){
+                    val color =
+                        ValueClass.fromClassToColor(
+                            ValueClass.fromValueToClass(
+                                dataType,
+                                entry.avgValue
+                            )
+                        )
+                    val mapSquare = entry.toCornersLatLngMap()
+
+                    val mutableMapForType = mapSquareWithColorList[dataType.ordinal]
+                    mutableMapForType[mapSquare] = color
+                }
+                // Check integrity: if mapSquareWithColor reflect the database entries
+                checkIntegrity(dataType, cornersAvgValueList)
             }
         }
+    }
 
+    private suspend fun processOrDeprocessData(
+        measurementViewModel: MeasurementViewModel,
+        dataType: DataType,
+    ) = withContext(Dispatchers.IO) {
+        val cornersCountList = async {
+            measurementViewModel.numDataByDataTypeGroupBySquare(
+                dataType = dataType,
+            )
+        }.await()
+        val updates = mutableListOf<Deferred<Unit>>()
+        for (entry in cornersCountList) {
+            val bool = entry.count >= numMeasurementsSP
+            val update =
+                async {
+                    measurementViewModel.updateBySquare(
+                        dataType = dataType,
+                        neCorner = entry.neCorner,
+                        nwCorner = entry.nwCorner,
+                        swCorner = entry.swCorner,
+                        seCorner = entry.seCorner,
+                        processed = bool
+                    )
+                }
+            updates.add(update)
+        }
+        updates.awaitAll()
+    }
+
+    private fun checkIntegrity(
+        dataType: DataType,
+        cornersAvgValueList: List<CornersAvgValue>
+    ){
+        if(mapSquareWithColorList[dataType.ordinal].size > cornersAvgValueList.size){
+            val newMap = mutableMapOf <Map <String, LatLng>, Int>()
+            for (entry in cornersAvgValueList){
+                val mapSquare = entry.toCornersLatLngMap()
+                if(mapSquareWithColorList[dataType.ordinal].containsKey(mapSquare)){
+                    newMap[mapSquare] = mapSquareWithColorList[dataType.ordinal][mapSquare]!!
+                }
+            }
+            mapSquareWithColorList[dataType.ordinal] = newMap
+        }
     }
 
     fun showActionBtn(show: Boolean){
@@ -225,18 +296,71 @@ class MainActivity : AppCompatActivity() {
         binding.actionButton.isEnabled = enable
     }
 
-    fun tempDisableActionBtn(fragmentId: Int) {
+    fun enableBottomNav(enable: Boolean){
+        binding.bottomNavigation.isEnabled = enable
+        binding.bottomNavigation.isClickable = enable
+        binding.bottomNavigation.isActivated = enable
+    }
 
-        _buttonStateLiveData[fragmentId]!!.postValue(false)
+    fun showProgressBar(enable: Boolean){
+        val progressBar = binding.progressBar
+        val view = binding.root
 
-        fragmentTimers[fragmentId] =
-            object : CountDownTimer(disableTimeSharedPref, 500) {
-                override fun onTick(millisUntilFinished: Long) {}
-                override fun onFinish() {
-                    _buttonStateLiveData[fragmentId]?.value = true
-                    fragmentTimers[fragmentId]?.cancel()
+        if (enable){
+            progressBar?.visibility = View.VISIBLE
+            view.alpha = 0.5f
+        }else{
+            progressBar?.visibility = View.GONE
+            view.alpha = 1f
+        }
+    }
+
+    suspend fun tempDisableActionBtn(dataType: DataType, gridSquare: Map<String, MGRS>){
+        val currGridSquare = toGridSquareString(gridSquare)
+        val fragmentId = dataType.ordinal
+        _enablingState[fragmentId].putIfAbsent(currGridSquare, MutableLiveData())
+        _enablingState[fragmentId][currGridSquare]?.postValue(false)
+
+        val handler = Handler(Looper.getMainLooper())
+        val runnable = Runnable {
+            _enablingState[fragmentId][currGridSquare]!!.postValue (true)
+            Log.d("TIMER", "Timer expired")
+        }
+        withContext(Dispatchers.Main) {
+            handler.postDelayed(runnable, disableTimeSP)
+        }
+
+    }
+
+    private fun observeState(){
+        if(activeFragment() is HomeFragment)
+            return  // No need to observe state in HomeFragment
+
+        val currentLatLng = mapModule.mapHandler.currentLatLng
+        currentLatLng.observe(this) { latLng ->
+            if (latLng != null) {
+                val activeFragment = activeFragment()
+                if (activeFragment is MeasurementFragmentInterface) {
+                    val gridSquare = getGridSquare(latLngToMgrs(latLng))
+                    val stateData = getEnablingState(activeFragment.dataType, gridSquare)
+                    stateData.observe(this) { state ->
+                        if (isBgOperationEnabledSP) {
+                            if (state)
+                                activeFragment.measureValue()
+                        } else
+                            enableActionBtn(state)
+                    }
                 }
-            }.start()
+            }
+        }
+
+    }
+
+    private fun getEnablingState(dataType: DataType, gridSquare: Map<String, MGRS>)
+            : LiveData<Boolean> {
+        val fId = dataType.ordinal
+        val gridSquareString = toGridSquareString(gridSquare)
+        return _enablingState[fId].getOrDefault(gridSquareString, MutableLiveData(true))
     }
 
     private fun activeFragment(): Fragment {
@@ -251,8 +375,8 @@ class MainActivity : AppCompatActivity() {
         ActivityCompat.requestPermissions(
             this,
             arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
-            this.LOCATION_PERMISSION_CODE)
-
+            this.LOCATION_PERMISSION_CODE
+        )
     }
 
     fun requestAudioPermission(){

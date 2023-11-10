@@ -3,9 +3,11 @@ package com.example.connectivitynoisemap.data
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.connectivitynoisemap.data.entity.CornersAvgValue
+import com.example.connectivitynoisemap.data.entity.CornersCount
 import com.example.connectivitynoisemap.data.entity.Measurement
 import com.example.connectivitynoisemap.data.type.DataType
-import com.example.connectivitynoisemap.main.module.implementation.MapHandler
+import com.example.connectivitynoisemap.main.utils.MapUtils.Companion.getGridSquare
+import com.example.connectivitynoisemap.main.utils.MapUtils.Companion.latLngToMgrs
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -15,6 +17,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import mil.nga.mgrs.MGRS
+import java.util.Date
 
 class MeasurementViewModel(
     private val repository: MeasurementRepository,
@@ -43,8 +46,9 @@ class MeasurementViewModel(
         )
     }
 
-    fun avgValue(
+    private fun avgValue(
         gridSquare: Map<String, MGRS>,
+        numMeasurements: Int,
         processed: Boolean = true
     ): Double {
         return repository.avgValue(
@@ -53,19 +57,31 @@ class MeasurementViewModel(
             nwCorner = gridSquare["nw"].toString(),
             swCorner = gridSquare["sw"].toString(),
             seCorner = gridSquare["se"].toString(),
-            processed = processed
+            processed = processed,
+            numMeasurements = numMeasurements
         )
     }
 
     fun avgValueByDataTypeGroupBySquare(
         dataType: DataType,
-        processed: Boolean = true
+        processed: Boolean = true,
+        numMeasurements: Int
     ): List<CornersAvgValue> {
         return repository.avgValueByDataTypeGroupBySquare(
             dataType = dataType,
-            processed = processed
+            processed = processed,
+            numMeasurements = numMeasurements
         )
     }
+
+    fun numDataByDataTypeGroupBySquare(
+        dataType: DataType,
+    ): List<CornersCount> {
+        return repository.numDataByDataTypeGroupBySquare(
+            dataType = dataType,
+        )
+    }
+
 
     private fun readMeasurements(
         gridSquare: Map<String, MGRS>,
@@ -94,18 +110,37 @@ class MeasurementViewModel(
             swCorner = gridSquare["sw"].toString(),
             seCorner = gridSquare["se"].toString(),
             value = value,
-            processed = processed
+            processed = processed,
+            timestamp = Date().time
         )
         this.upsertMeasurement(measurement)
+    }
+
+    fun updateBySquare(
+        dataType: DataType,
+        processed: Boolean,
+        neCorner: String,
+        nwCorner: String,
+        swCorner: String,
+        seCorner: String
+    ) {
+        repository.updateBySquare(
+            dataType = dataType,
+            processed = processed,
+            neCorner = neCorner,
+            nwCorner = nwCorner,
+            swCorner = swCorner,
+            seCorner = seCorner
+        )
     }
 
     suspend fun saveData(
         value: Double,
         latLng: LatLng,
         minNumMeasurements: Int
-    ): Pair<Int, Map<String, MGRS>>
+    ): Int
     = withContext(Dispatchers.IO) {
-        val mgrs = MapHandler.latLngToMgrs(latLng)
+        val mgrs = latLngToMgrs(latLng)
         val gridSquare = getGridSquare(mgrs)
 
         val numMeasurements = async {
@@ -114,25 +149,31 @@ class MeasurementViewModel(
 
         val remainingMeasurements = minNumMeasurements - (numMeasurements + 1) // +1 for the upcoming measurement
 
-        val deferredQuery = if (remainingMeasurements >= 0)
-            async {
-                insertMeasurement(value, gridSquare)
-            }
-        else
-            async {
-                insertMeasurement(
-                    value,
-                    gridSquare,
-                    processed = true
-                )
-            }
+        val deferredQuery =
+            if (remainingMeasurements >= 0)
+                async {
+                    insertMeasurement(
+                        value,
+                        gridSquare,
+                        processed = false
+                    )
+                }
+            else
+                async {
+                    insertMeasurement(
+                        value,
+                        gridSquare,
+                        processed = true
+                    )
+                }
         deferredQuery.await()
 
-        return@withContext Pair(remainingMeasurements, gridSquare)
+        return@withContext remainingMeasurements
     }
 
     suspend fun processDataAndCreateSquare(
-        gridSquare: Map<String, MGRS>
+        gridSquare: Map<String, MGRS>,
+        numMeasurements: Int
     ) : Double = withContext(Dispatchers.IO) {
 
         val unprocessedData = async {
@@ -150,55 +191,19 @@ class MeasurementViewModel(
         }
         deferredList.awaitAll()
 
-        return@withContext getAvgValue(gridSquare)
+        return@withContext getAvgValue(gridSquare, numMeasurements)
     }
 
     suspend fun getAvgValue(
-        gridSquare: Map<String, MGRS>
+        gridSquare: Map<String, MGRS>,
+        numMeasurements: Int
     ) : Double = withContext(Dispatchers.IO) {
         val avgValue = async {
-            avgValue(gridSquare)
+            avgValue(gridSquare, numMeasurements)
         }.await()
 
         return@withContext avgValue
     }
 
 
-    private fun getGridSquare(
-        mgrs: MGRS,
-        meters: Long = 10
-    ): Map<String, MGRS> {
-
-        val easting: Long = mgrs.easting - (mgrs.easting % meters)
-        val northing: Long = mgrs.northing - (mgrs.northing % meters)
-        val northeast = MGRS(mgrs.zone, mgrs.band, mgrs.column, mgrs.row, easting + meters, northing + meters)
-        val northwest = MGRS(mgrs.zone, mgrs.band, mgrs.column, mgrs.row, easting, northing + meters)
-        val southeast = MGRS(mgrs.zone, mgrs.band, mgrs.column, mgrs.row,easting + meters, northing)
-        val southwest = MGRS(mgrs.zone, mgrs.band, mgrs.column, mgrs.row, easting, northing)
-
-        return mapOf(
-            "ne" to northeast,
-            "nw" to northwest,
-            "sw" to southwest,
-            "se" to southeast)
-    }
-
-    /*
-    private fun isCurrentGridSquare(
-        gridSquare:Map<String, MGRS>,
-        currentMgrs: MGRS,
-        mgrs: MGRS
-    ): Boolean {
-        infix fun Long.isBetweenInclusive(range: LongRange) = this in range
-
-        return (mgrs.zone == currentMgrs.zone &&
-                mgrs.band == currentMgrs.band &&
-                mgrs.column == currentMgrs.column &&
-                mgrs.row == currentMgrs.row &&
-                mgrs.easting isBetweenInclusive
-                    gridSquare["sw"]!!.easting..gridSquare["se"]!!.easting &&
-                mgrs.northing isBetweenInclusive
-                    gridSquare["sw"]!!.northing..gridSquare["nw"]!!.northing)
-    }
-     */
 }

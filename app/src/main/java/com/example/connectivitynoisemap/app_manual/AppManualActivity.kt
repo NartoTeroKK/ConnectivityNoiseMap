@@ -24,19 +24,19 @@ class AppManualActivity : AppCompatActivity() {
         val text =
             "This app allows you to measure the quality of the mobile network signal, the WiFi signal and the acoustic noise in your area. " +
             "The measurements are displayed on a map and can be used to identify areas with poor signal or noise pollution.<br/><br/>" +
-            "The app can be used in two ways:<br/>" +
-            "-<b>Manual</b>: the measurements are run manually by the user.<br/>" +
-            "-<b>Automatic</b>: the measurements are run automatically in the background.<br/><br/>" +
-            "The app is divided in three sections: <b>Main</b>, <b>Settings</b> and <b>App Manual</b>.<br/>" +
-            "The Main section is divided into four views among which you can navigate with the bottom navigation bar:<br/>" +
-            "-<b>Home</b>: the landing view of the app. Contains a menu to go to the other pages of the app.<br/>" +
-            "-<b>Mobile</b>: this view contains a map with the measurements of the mobile network signal strength.<br/>" +
-            "-<b>WiFi</b>: this view contains a map with the measurements of the WiFi signal strength.<br/>" +
-            "-<b>Noise</b>: this view contains a map with the measurements of the acoustic noise.<br/><br/>" +
-            "The other two section are accessible from the Home menu:<br/>" +
-            "-<b>Settings</b>: this section allows you to manage settings for the app's features.<br/>" +
-            "-<b>App Manual</b>: this current section. It contains the manual of the app.<br/><br/>" +
-            "<u>NOTE</u>: the app requires the location and microphone permission to run."
+            "The app can be used in two ways:" +
+            "<ul><li><b> Manual</b>: the measurements are run manually by the user.</li>" +
+            "<li><b> Automatic</b>: the measurements are run automatically in the background.</li></ul>" +
+            "The app is divided in three sections: <b>Main</b>, <b>Settings</b> and <b>App Manual</b>." +
+            "The Main section is divided itself into four views among which you can navigate with the bottom navigation bar:" +
+            "<ul><li><b> Home</b>: the landing view of the app. Contains 2 buttons to navigate to the Settings and Manual sections of the app.</li>" +
+            "<li><b> Mobile</b>: this view contains a map with the measurements of the mobile network signal strength.</li>" +
+            "<li><b> WiFi</b>: this view contains a map with the measurements of the WiFi signal strength.</li>" +
+            "<li><b> Noise</b>: this view contains a map with the measurements of the acoustic noise.</li></ul>" +
+            "The other two section are accessible from the Home menu:" +
+            "<ul><li><b> Settings</b>: this section allows you to manage settings for the app's features.</li>" +
+            "<li><b> App Manual</b>: this current section. It contains the manual of the app.</li></ul>" +
+            "<i>NOTE: the app requires the location and microphone permission to run.</i>"
 
         findViewById<TextView>(R.id.manualTextView).text = Html.fromHtml(text)
 

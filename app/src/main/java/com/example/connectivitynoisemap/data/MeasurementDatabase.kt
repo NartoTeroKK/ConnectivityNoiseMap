@@ -5,15 +5,15 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import com.example.connectivitynoisemap.data.converter.Converters
 import com.example.connectivitynoisemap.data.entity.Measurement
-import com.example.connectivitynoisemap.data.type.converter.DataTypeConverter
 
 @Database(
     entities = [Measurement::class],
     version = 1,
     exportSchema = false
 )
-@TypeConverters(DataTypeConverter::class)
+@TypeConverters(Converters::class)
 abstract class MeasurementDatabase: RoomDatabase() {
 
     abstract fun measurementDao(): MeasurementDao

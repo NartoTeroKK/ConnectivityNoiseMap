@@ -30,7 +30,7 @@ class NoiseViewModel : ViewModel() {
         private var isRecording = false
         private lateinit var recordingJob : Job
 
-        var volumeData = MutableLiveData<Double>()  // [dB]
+        var volumeData = MutableLiveData<Double>(-1.0)  // [dB]
 
         @SuppressLint("MissingPermission")
         private fun start() {
@@ -60,6 +60,12 @@ class NoiseViewModel : ViewModel() {
                         Log.e("AudioRecord", "Error reading audio data")
                         break
                     }
+
+                    for (s in buffer) {
+                        sum += abs(s.toInt())
+                        count++
+                    }
+                    /*
                     var prev = abs(buffer[0].toInt())
                     for (i in 1 until buffer.size - 1) {
                         val s = abs(buffer[i].toInt())
@@ -71,8 +77,10 @@ class NoiseViewModel : ViewModel() {
                         }
                         prev = s
                     }
+                    */
                 }
-                // Average Peak
+
+                // Compute the average amplitude and volume
                 val avgAmp = sum.toDouble() / count.toDouble()
                 val avgVol = amp2dB(avgAmp)
 
@@ -108,7 +116,7 @@ class NoiseViewModel : ViewModel() {
     }
 
     fun resetVolume() {
-        soundMeter.volumeData = MutableLiveData<Double>()
+        soundMeter.volumeData.postValue(-1.0)
     }
 
 }

@@ -5,12 +5,12 @@ import android.content.Context
 import android.location.Location
 import android.location.LocationManager
 import android.os.Looper
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationListener
+import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.model.LatLng
@@ -32,15 +32,22 @@ class LatLngListener constructor(
         }
     }
 
+    private val _currentLatLng = MutableLiveData<LatLng>()
+    val currentLatLng: LiveData<LatLng> = _currentLatLng
+
     private val fusedLocationProviderClient: FusedLocationProviderClient
     by lazy {
         LocationServices.getFusedLocationProviderClient(context)
     }
-    private val locationListener by lazy {
-        LocationListener { location ->
-            val latLng = locationToLatLng(location)
-            _currentLatLng.postValue(latLng) // update the LiveData
-            Log.d("LOCATION", "Location: $latLng")
+    private val locationCallback : LocationCallback
+    by lazy {
+        object : LocationCallback(){
+            override fun onLocationResult(locationResult: LocationResult) {
+                locationResult ?: return
+                for (location in locationResult.locations) {
+                    _currentLatLng.postValue(locationToLatLng(location))
+                }
+            }
         }
     }
     private val locationManager: LocationManager
@@ -50,15 +57,10 @@ class LatLngListener constructor(
     val isLocationEnabled: Boolean
         get() = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
 
-    private val _currentLatLng = MutableLiveData<LatLng>()
-    val currentLatLng: LiveData<LatLng>
-        get() = _currentLatLng
-
     init {
         if (isLocationPermGranted) {
             onLocationPermGranted()
         }
-
     }
 
     fun onLocationPermGranted(){
@@ -69,14 +71,13 @@ class LatLngListener constructor(
     private fun initLocationUpdates() {
 
         val locationRequest = LocationRequest()
-        locationRequest.interval = 1000
-        locationRequest.fastestInterval = 500
-        locationRequest.smallestDisplacement = 1f
+        locationRequest.interval = 500
+        locationRequest.fastestInterval = 250
         locationRequest.priority = Priority.PRIORITY_HIGH_ACCURACY
 
         fusedLocationProviderClient.requestLocationUpdates(
             locationRequest,
-            locationListener,
+            locationCallback,
             Looper.getMainLooper()
         )
     }
@@ -103,7 +104,7 @@ class LatLngListener constructor(
     }
 
     fun removeLocationUpdates(){
-        this.fusedLocationProviderClient.removeLocationUpdates(locationListener)
+        this.fusedLocationProviderClient.removeLocationUpdates(locationCallback)
     }
 
 }

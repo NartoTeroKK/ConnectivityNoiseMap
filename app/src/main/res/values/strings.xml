@@ -39,26 +39,27 @@
     <!-- Preference Titles -->
     <string name="map_settings">Map settings</string>
     <string name="measurements_settings">Measurements settings</string>
+    <string name="bg_op_settings">Background operation settings</string>
 
     <!-- Map Settings -->
     <string name="map_type_title">Set map type</string>
 
     <!-- Sound measurement time -->
     <string name="noise_meter_time_title">Noise measurement time</string>
-    <string name="noise_meter_time_summary">Time in seconds to measure acoustic noise</string>
+    <string name="noise_meter_time_summary">Time in seconds of the acoustic noise measurement</string>
 
     <!-- min X measurements -->
     <string name="num_measurements_title">N° of measurements</string>
-    <string name="num_measurements_summary">Minimum number of measurements to check signal or noise quality</string>
+    <string name="num_measurements_summary">Number of the last measurement used to process the collected data</string>
 
 
     <!-- min n minutes -->
     <string name="num_minutes_title">Minutes to wait</string>
-    <string name="num_minutes_summary">Minimum number of minutes to wait to run another measurement of the same type</string>
+    <string name="num_minutes_summary">Minutes to wait to run a new measurement of the same type in the same area</string>
 
     <!-- Background Operation settings -->
-    <string name="bg_operation">Enable background measure</string>
-    <string name="bg_operation_on">Measurements run also in background</string>
+    <string name="bg_operation">Enable background measurements</string>
+    <string name="bg_operation_on">Measurements run in background</string>
     <string name="bg_operation_off">Measurements can be executed only manually</string>
 
 </resources>

@@ -9,12 +9,14 @@ import com.example.connectivitynoisemap.data.type.DataType
 import com.example.connectivitynoisemap.main.MainActivity
 import com.example.connectivitynoisemap.main.utils.GUI
 import com.example.connectivitynoisemap.main.utils.LatLngListener
+import com.example.connectivitynoisemap.main.utils.MapUtils.Companion.mgrsToLatLng
 import com.example.connectivitynoisemap.main.utils.ValueClass
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.Polygon
 import com.google.android.gms.maps.model.PolygonOptions
 import com.google.android.gms.maps.model.TileOverlayOptions
 import kotlinx.coroutines.CoroutineScope
@@ -40,14 +42,6 @@ class MapHandler(
         fun getInstance(activity: MainActivity): MapHandler {
             return instance ?: MapHandler( activity).also { instance = it }
         }
-
-        fun mgrsToLatLng(mgrs: MGRS) : LatLng{
-            return LatLng(mgrs.toPoint().latitude, mgrs.toPoint().longitude)
-        }
-
-        fun latLngToMgrs(latLng: LatLng) : MGRS {
-            return MGRS.from(latLng.longitude, latLng.latitude)
-        }
     }
 
     private lateinit var mapView: MapView
@@ -61,8 +55,7 @@ class MapHandler(
     by lazy {
         LatLngListener.getInstance(activity, isLocationPermGranted)
     }
-    val currentLatLng: LiveData<LatLng>
-        get() = mLatLngListener.currentLatLng
+    val currentLatLng: LiveData<LatLng> = mLatLngListener.currentLatLng
 
     private var isZoomedIn = false
 
@@ -76,6 +69,9 @@ class MapHandler(
         activity.mapSquareWithColorList
     }
     private var listener: OnMapLoaded? = null
+    private val polygonMap by lazy{
+        mutableMapOf<Map<String, LatLng>, Polygon>()
+    }
 
     // METHODS
 
@@ -87,7 +83,7 @@ class MapHandler(
         grids.disableAllLabelers()
         grids.setMaxZoom(tenMtGrid, 100)
         grids.setColor(tenMtGrid, tenMtGrid, Color.black())
-        grids.setWidth(tenMtGrid, 3.0)
+        grids.setWidth(tenMtGrid, 2.0)
 
         return MGRSTileProvider.create(context, grids)
     }
@@ -224,6 +220,7 @@ class MapHandler(
 
     fun drawMapSquares(dataType: DataType){
         googleMap.clear()
+        polygonMap.clear()
 
         val mapSquareWithColor =
             mapSquareWithColorList.getOrNull(dataType.ordinal) ?: return
@@ -238,8 +235,23 @@ class MapHandler(
         //polygonOptions.strokeColor(color)
         polygonOptions.strokeWidth(1f)
         polygonOptions.fillColor(color)
-        polygonOptions.geodesic(true)
-        this.googleMap.addPolygon(polygonOptions)
+        // Put polygon in the Map and draw it if absent
+        // else uppdate the existing poligon
+        val polygon = polygonMap.get(mapSquare)
+        if( polygon == null) {
+            val newPolygon = googleMap.addPolygon(polygonOptions)
+            polygonMap.put(mapSquare, newPolygon)
+        }else{
+            polygon.fillColor = color
+            polygonMap.replace(mapSquare, polygon)
+        }
+
+    }
+
+    fun checkIntegrity(){
+        for ((mapSquare, polygon) in polygonMap){
+
+        }
     }
 
 }
