@@ -1,7 +1,5 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
+<resources>
     <string name="app_name">ConnectivityNoiseMap</string>
-    <!-- Google Api Key  -->
-    <string name="google_api_key" tools:ignore="Typos">AIzaSyCIn-2IbRWqqQ42_42XAMs1O7JokMmt_l8</string>
     <!-- Home -->
     <string name="app_title">Cellular Connectivity and Noise Map</string>
     <!-- Strings used for fragments for navigation -->
