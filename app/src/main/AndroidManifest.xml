@@ -32,14 +32,15 @@
             android:label="@string/title_activity_app_manual"
             android:theme="@style/Theme.ConnectivityNoiseMap" />
 
-
         <activity
             android:name=".settings.SettingsActivity"
             android:exported="false"
             android:label="@string/title_activity_settings" />
+
         <activity
             android:name=".main.MainActivity"
             android:exported="true"
+            android:screenOrientation="portrait"
             android:theme="@style/Theme.ConnectivityNoiseMap">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
