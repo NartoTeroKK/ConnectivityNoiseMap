@@ -20,13 +20,14 @@
         tools:viewBindingIgnore="false">
 
         <TextView
-            style="@style/Widget.AppCompat.TextView"
+            style="@android:style/Widget.TextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:contentDescription="@string/app_title"
             android:text="@string/app_title"
             android:textAlignment="center"
             android:textAppearance="@style/TextAppearance.AppCompat.Display1"
+            android:textColor="@color/text"
             android:textSize="40sp"
             android:textStyle="bold"
             app:layout_constraintBottom_toTopOf="@+id/linearLayout2"
@@ -49,7 +50,7 @@
 
             <Button
                 android:id="@+id/btnManual"
-                style="@style/Widget.Material3.Button"
+                style="@style/Widget.Material3.Button.ElevatedButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
@@ -61,6 +62,7 @@
 
             <Button
                 android:id="@+id/btnSettings"
+                style="@style/Widget.Material3.Button.ElevatedButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:fontFamily="sans-serif"

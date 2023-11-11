@@ -70,8 +70,8 @@ class LatLngListener constructor(
     private fun initLocationUpdates() {
 
         val locationRequest = LocationRequest()
-        locationRequest.interval = 1000
-        locationRequest.fastestInterval = 500
+        locationRequest.interval = 500
+        locationRequest.fastestInterval = 250
         locationRequest.priority = Priority.PRIORITY_HIGH_ACCURACY
 
         fusedLocationProviderClient.requestLocationUpdates(

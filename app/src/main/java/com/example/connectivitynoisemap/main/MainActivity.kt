@@ -381,7 +381,11 @@ class MainActivity : AppCompatActivity() {
             : LiveData<Boolean> {
         val fId = dataType.ordinal
         val gridSquareString = toGridSquareString(gridSquare)
-        return _enablingState[fId].getOrDefault(gridSquareString, MutableLiveData(true))
+        return _enablingState[fId].getOrDefault(gridSquareString, null)
+            ?: run { val mld = MutableLiveData<Boolean>()
+                mld.postValue(true)
+                mld
+            }
     }
 
     private fun activeFragment(): Fragment {
