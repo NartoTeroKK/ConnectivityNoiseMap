@@ -27,7 +27,6 @@ import com.example.connectivitynoisemap.main.utils.MapUtils
 import com.example.connectivitynoisemap.main.utils.ValueClass
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.launch
-import mil.nga.mgrs.MGRS
 
 
 class WifiFragment :
@@ -58,15 +57,12 @@ class WifiFragment :
     private val currentLatLng: LiveData<LatLng>
     by lazy { mapHandler.currentLatLng }
 
-    private val currentGridSquare : Map<String, MGRS>
-        get() {
-            return MapUtils.getGridSquare(MapUtils.latLngToMgrs(currentLatLng.value!!))
-        }
     private val isLocationPermGranted: Boolean
         get() = activity.isLocationPermGranted
 
-    override val activity: MainActivity
-        get() = requireActivity() as MainActivity
+    override val activity: MainActivity by lazy {
+        requireActivity() as MainActivity
+    }
 
     override val dataType: DataType = DataType.WIFI
 
@@ -93,33 +89,6 @@ class WifiFragment :
         // Set the mapView of the MapHandler
         val mapView = binding.mapViewContainer.mapView
         mapHandler.setMapView(mapView, savedInstanceState)
-        /*
-        currentLatLng.observe(viewLifecycleOwner){ latLng ->
-            if(latLng != null){
-                val gridSquare = MapUtils.getGridSquare(MapUtils.latLngToMgrs(latLng))
-                val stateData = activity.getButtonState(dataType, gridSquare)
-                stateData.observe(viewLifecycleOwner){ state ->
-                    if(activity.isBgOperationEnabledSP) {
-                        if (state)
-                            this.measureValue()
-                    }else
-                        activity.enableActionBtn(state)
-                }
-            }
-        }
-
-        if (currentLatLng.value != null) {
-            val stateData = activity.getButtonState(dataType, currentGridSquare)
-            stateData.observe(viewLifecycleOwner) { state ->
-                if(activity.isBgOperationEnabledSP) {
-                    if (state)
-                        this.measureValue()
-                }else
-                    activity.enableActionBtn(state)
-            }
-        }
-        */
-
 
         return binding.root
     }
@@ -129,11 +98,6 @@ class WifiFragment :
         // Show the action button if background operations are disabled
         if(!activity.isBgOperationEnabledSP)
             activity.showActionBtn(true)
-    }
-
-    override fun onResume() {
-        super.onResume()
-        //mapHandler.onFragmentResumed()
     }
 
     override fun onDestroyView() {
@@ -152,13 +116,14 @@ class WifiFragment :
     override fun onMapLoaded() {
         // Draw the map squares for this fragment and data type
         mapHandler.drawMapSquares(dataType)
+        if(activity.isBgOperationEnabledSP)
+            this.measureValue()
     }
 
     override fun measureValue() {
-
+        activity.isMeasuring = true
         // Wifi signal strength measurement
-        val wifiRssi = fragmentViewModel.wifiRssi
-        when (wifiRssi) {
+        when (val wifiRssi = fragmentViewModel.wifiRssi) {
             +1.0-> {
                 Log.e("ERROR", "Error in wifi connection RSSI")
             }
@@ -220,30 +185,12 @@ class WifiFragment :
 
                                 mapHandler.addOrUpdateMapSquare(dataType, gridSquare, signalClass)
                             }
+                            activity.isMeasuring = false
                         }
                     }
                 }
             }
         }
     }
-
-    /*
-    private fun enableWifiAlert() {
-        val builder = AlertDialog.Builder(requireContext())
-
-        builder.setTitle("Enable WiFi")
-
-        builder.setMessage("If you want to use this feature of the app you need to enable WiFi")
-
-        builder.setPositiveButton("OK") { dialog, _ ->
-            dialog.dismiss()
-            //view?.findNavController()?.navigate(R.id.action_wifiFragment_to_homeFragment)
-        }
-
-        val alertDialog = builder.create()
-
-        alertDialog.show()
-    }
-    */
 
 }

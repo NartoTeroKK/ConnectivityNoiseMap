@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.LiveData
@@ -27,7 +26,6 @@ import com.example.connectivitynoisemap.main.utils.MapUtils.Companion.latLngToMg
 import com.example.connectivitynoisemap.main.utils.ValueClass
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.launch
-import mil.nga.mgrs.MGRS
 
 class MobileNetworkFragment :
     Fragment(),
@@ -56,14 +54,12 @@ class MobileNetworkFragment :
     private val currentLatLng: LiveData<LatLng>
     by lazy { mapHandler.currentLatLng }
 
-    private val currentGridSquare : Map<String, MGRS>
-        get() = getGridSquare(latLngToMgrs(currentLatLng.value!!))
-
     private val isLocationPermGranted: Boolean
         get() = activity.isLocationPermGranted
 
-    override val activity: MainActivity
-        get() = requireActivity() as MainActivity
+    override val activity: MainActivity by lazy {
+        requireActivity() as MainActivity
+    }
 
     override val dataType: DataType = DataType.MOBILE_NETWORK
 
@@ -89,49 +85,6 @@ class MobileNetworkFragment :
         // set the mapView of the MapHandler
         val mapView = binding.mapViewContainer.mapView
         mapHandler.setMapView(mapView, savedInstanceState)
-        /*
-        currentLatLng.observe(viewLifecycleOwner){ latLng ->
-            if(latLng != null){
-                val gridSquare = MapUtils.getGridSquare(MapUtils.latLngToMgrs(latLng))
-                val stateData = activity.getButtonState(dataType, gridSquare)
-                stateData.observe(viewLifecycleOwner){ state ->
-                    if(activity.isBgOperationEnabledSP) {
-                        if (state)
-                            this.measureValue()
-                    }else
-                        activity.enableActionBtn(state)
-                }
-            }
-        }
-
-         */
-
-        /*
-        if (currentLatLng.value != null) {
-            val stateData = activity.getButtonState(dataType, currentGridSquare)
-            stateData.observe(viewLifecycleOwner) { state ->
-                if(activity.isBgOperationEnabledSP) {
-                    if (state)
-                        this.measureValue()
-                }else
-                    activity.enableActionBtn(state)
-            }
-        }
-         */
-
-
-        /*
-        // Enable the action button or wait for the timer to finish
-        if (buttonState.value!!)
-            activity.enableActionBtn(true)
-        else{
-            activity.enableActionBtn(false)
-        }
-        buttonState.observe(viewLifecycleOwner) { state ->
-            if (state == true)
-                activity.enableActionBtn(true)
-        }
-         */
 
         return binding.root
     }
@@ -141,11 +94,6 @@ class MobileNetworkFragment :
         // Show the action button if background operations are disabled
         if(!activity.isBgOperationEnabledSP)
             activity.showActionBtn(true)
-    }
-
-    override fun onResume() {
-        super.onResume()
-        //mapHandler.onFragmentResumed()
     }
 
     override fun onDestroyView() {
@@ -169,10 +117,12 @@ class MobileNetworkFragment :
     override fun onMapLoaded() {
         // Draw the map squares for this fragment and data type
         mapHandler.drawMapSquares(dataType)
+        if(activity.isBgOperationEnabledSP)
+            this.measureValue()
     }
 
     override fun measureValue(){
-
+        activity.isMeasuring = true
         // Mobile Network signal strength measurement
         val mobileRssi = fragmentViewModel.mobileRssi
         if(mobileRssi == 1.0)
@@ -202,15 +152,13 @@ class MobileNetworkFragment :
                         if(remainingMeasurements > 0){
                             GUI.showToast(
                                 requireContext(),
-                                "$remainingMeasurements measurements remaining",
-                                Toast.LENGTH_SHORT
+                                "$remainingMeasurements measurements remaining"
                             )
                         } else { // remainingMeasurements <= 0
                             // Process the data inserted
                             GUI.showToast(
                                 requireContext(),
-                                "Measurement completed",
-                                Toast.LENGTH_SHORT
+                                "Measurement completed"
                             )
                             val avgValue =
                                 if(remainingMeasurements == 0)
@@ -232,30 +180,14 @@ class MobileNetworkFragment :
 
                             mapHandler.addOrUpdateMapSquare(dataType, gridSquare, signalClass)
                         }
+                        activity.isMeasuring = false
                     }
                 }
+
             }
         }
+
     }
-
-    /*
-    fun enableMobNetAlert(){
-        val builder = AlertDialog.Builder(requireContext())
-
-        builder.setTitle("Enable Mobile Network")
-
-        builder.setMessage("If you want to use this feature of the app you need to enable Mobile Network")
-
-        builder.setPositiveButton("OK") { dialog, _ ->
-            dialog.dismiss()
-            //(requireActivity() as MainActivity).findNavController(R.id.nav_host_fragment).navigate(R.id.action_mobileNetworkFragment_to_homeFragment)
-        }
-
-        val alertDialog = builder.create()
-
-        alertDialog.show()
-    }
-     */
 
 }
 

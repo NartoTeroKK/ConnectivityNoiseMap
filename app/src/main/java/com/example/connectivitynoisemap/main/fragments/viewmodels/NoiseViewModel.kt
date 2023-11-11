@@ -5,12 +5,12 @@ import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.util.Log
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -20,8 +20,6 @@ import kotlin.math.log10
 class NoiseViewModel : ViewModel() {
 
     private val soundMeter = SoundMeter()
-    
-    val volume: LiveData<Double> = soundMeter.volumeData
 
     private inner class SoundMeter {
         private var ar: AudioRecord? = null
@@ -30,7 +28,7 @@ class NoiseViewModel : ViewModel() {
         private var isRecording = false
         private lateinit var recordingJob : Job
 
-        var volumeData = MutableLiveData<Double>(-1.0)  // [dB]
+        var volume = 0.0  // [dB]
 
         @SuppressLint("MissingPermission")
         private fun start() {
@@ -65,26 +63,13 @@ class NoiseViewModel : ViewModel() {
                         sum += abs(s.toInt())
                         count++
                     }
-                    /*
-                    var prev = abs(buffer[0].toInt())
-                    for (i in 1 until buffer.size - 1) {
-                        val s = abs(buffer[i].toInt())
-                        // AVG PEAK
-                        val next = abs(buffer[i + 1].toInt())
-                        if (s > prev && s > next) {
-                            sum += s
-                            count++
-                        }
-                        prev = s
-                    }
-                    */
                 }
 
                 // Compute the average amplitude and volume
                 val avgAmp = sum.toDouble() / count.toDouble()
                 val avgVol = amp2dB(avgAmp)
 
-                volumeData.postValue(avgVol)
+                volume = avgVol
                 recordingJob.cancel()
             }
 
@@ -103,20 +88,17 @@ class NoiseViewModel : ViewModel() {
             return 20 * log10(amp)
         }
 
-        fun recordNoise(delay: Long) =
-            viewModelScope.launch(Dispatchers.IO){
+        fun recordNoise(delay: Long): Deferred<Unit> =
+            viewModelScope.async(Dispatchers.IO) {
                 start()
                 delay(delay)
                 stop()
             }
     }
 
-    fun measureNoise(delay: Long) {
-        soundMeter.recordNoise(delay)
-    }
-
-    fun resetVolume() {
-        soundMeter.volumeData.postValue(-1.0)
+    suspend fun measureNoise(delay: Long) : Double {
+        soundMeter.recordNoise(delay).await()
+        return soundMeter.volume
     }
 
 }

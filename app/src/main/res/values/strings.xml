@@ -1,24 +1,19 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">ConnectivityNoiseMap</string>
-    <string name="action_settings">Settings</string>
     <!-- Google Api Key  -->
     <string name="google_api_key" tools:ignore="Typos">AIzaSyCIn-2IbRWqqQ42_42XAMs1O7JokMmt_l8</string>
     <!-- Home -->
     <string name="app_title">Cellular Connectivity and Noise Map</string>
     <!-- Strings used for fragments for navigation -->
-    <string name="next">Next</string>
-    <string name="previous">Previous</string>
     <string name="action">Action</string>
     <!-- Activities -->
     <string name="title_activity_settings">SettingsActivity</string>
     <string name="title_activity_app_manual">AppManualActivity</string>
     <string name="settings">Settings</string>
     <string name="app_manual">App Manual</string>
-    <string name="app_manual_text">This app allows you to measure the quality of the mobile network signal, the WiFi signal and the acoustic noise in your area. The measurements are displayed on a map and can be used to identify areas with poor signal or noise pollution. The app can be used in two ways: Manual: the measurements are run manually by the user. Automatic: the measurements are run automatically in the background. The app is divided in three sections: Main, Settings and App Manual. The Main section is divided into four views among which you can navigate with the bottom navigation bar: Home: the landing view of the app. Contains a menu to go to the other pages of the app. Mobile: this view contains a map with the measurements of the mobile network signal strength. WiFi: this view contains a map with the measurements of the WiFi signal strength. Noise: this view contains a map with the measurements of the acoustic noise. The other two section are accessible from the Home menu: Settings: this section allows you to manage settings for the app\'s features. App Manual: this current section. It contains the manual of the app. NOTE: the app requires the location and microphone permission to run.</string>
     <!-- Fragments -->
     <string name="home">Home</string>
     <string name="mobile">Mobile</string>
-    <string name="mobile_network">Mobile Network</string>
     <string name="wifi">WiFi</string>
     <string name="noise">Noise</string>
 
@@ -26,8 +21,6 @@
 
     <!-- Map Descriptions -->
     <string name="map_description">Map to display noise and signal measurements classification</string>
-    <string name="wifi_map_description">Map to display WiFi signal strength</string>
-    <string name="noise_map_description">Map to display acoustic noise volume</string>
 
     <!-- Preferences KEYS -->
     <string name="map_type_key">map_type</string>

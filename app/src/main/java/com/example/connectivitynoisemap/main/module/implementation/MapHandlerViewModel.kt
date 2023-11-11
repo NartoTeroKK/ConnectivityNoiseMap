@@ -5,9 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 
 class MapHandlerViewModel(
     val mapHandler: MapHandler
-) : ViewModel(){
-
-}
+) : ViewModel()
 
 class MapHandlerViewModelFactory(private val mapHandler: MapHandler) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {

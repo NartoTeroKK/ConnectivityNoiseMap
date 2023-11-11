@@ -7,9 +7,5 @@
 
     <style name="Theme.ConnectivityNoiseMap" parent="Base.Theme.ConnectivityNoiseMap" />
 
-    <style name="AlertDialogTheme" parent="Theme.AppCompat.DayNight.Dialog.Alert">
-        <!-- Personalizza le proprietà del tuo tema dell'AlertDialog qui, se necessario -->
-    </style>
-
 
 </resources>

@@ -20,7 +20,6 @@
         tools:viewBindingIgnore="false">
 
         <TextView
-            android:id="@+id/appTitle"
             style="@style/Widget.AppCompat.TextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

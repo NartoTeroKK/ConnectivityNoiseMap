@@ -113,6 +113,9 @@ class MainActivity : AppCompatActivity() {
     val mapSquareWithColorList: MutableList< MutableMap <Map <String, LatLng>, Int>>
         = mutableListOf()
 
+    var isMeasuring = false
+
+
     init{
         val dataTypes =
             DataType.values()
@@ -164,7 +167,7 @@ class MainActivity : AppCompatActivity() {
                             activeFragment.requireContext(),
                             activeFragment.requireView(),
                             "Recording acoustic noise...",
-                            noiseMeasurementTimeSP.toInt()
+                            Snackbar.LENGTH_LONG
                         )
                         .setAnchorView(binding.actionButton)
                         .setAnimationMode(Snackbar.ANIMATION_MODE_FADE)
@@ -204,13 +207,17 @@ class MainActivity : AppCompatActivity() {
     private suspend fun generateMapSquares() {
         // MeasurementViewModel to access Room query
         val measurementViewModel : MeasurementViewModel
-                by viewModels {
-                    MeasurementViewModelFactory(
-                        (application as MeasurementApplication).repository,
-                        null
-                    )
-                }
-        withContext(Dispatchers.IO){
+            by viewModels {
+                MeasurementViewModelFactory(
+                    (application as MeasurementApplication).repository,
+                    null
+                )
+            }
+        withContext(Dispatchers.Default){
+            withContext(Dispatchers.Main) {
+                showProgressBar(true)
+            }
+
             for (dataType in DataType.values()){
 
                 processOrDeprocessData(measurementViewModel, dataType)
@@ -237,6 +244,10 @@ class MainActivity : AppCompatActivity() {
                 }
                 // Check integrity: if mapSquareWithColor reflect the database entries
                 checkIntegrity(dataType, cornersAvgValueList)
+            }
+
+            withContext(Dispatchers.Main) {
+                showProgressBar(false)
             }
         }
     }
@@ -293,7 +304,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun enableActionBtn(enable: Boolean){
-        binding.actionButton.isEnabled = enable
+        binding.actionButton.isEnabled   = enable
     }
 
     fun enableBottomNav(enable: Boolean){
@@ -318,6 +329,7 @@ class MainActivity : AppCompatActivity() {
     suspend fun tempDisableActionBtn(dataType: DataType, gridSquare: Map<String, MGRS>){
         val currGridSquare = toGridSquareString(gridSquare)
         val fragmentId = dataType.ordinal
+
         _enablingState[fragmentId].putIfAbsent(currGridSquare, MutableLiveData())
         _enablingState[fragmentId][currGridSquare]?.postValue(false)
 
@@ -329,31 +341,40 @@ class MainActivity : AppCompatActivity() {
         withContext(Dispatchers.Main) {
             handler.postDelayed(runnable, disableTimeSP)
         }
-
+        // Observe the state on the active fragment
+        observeState()
     }
 
     private fun observeState(){
-        if(activeFragment() is HomeFragment)
-            return  // No need to observe state in HomeFragment
 
-        val currentLatLng = mapModule.mapHandler.currentLatLng
-        currentLatLng.observe(this) { latLng ->
-            if (latLng != null) {
-                val activeFragment = activeFragment()
-                if (activeFragment is MeasurementFragmentInterface) {
-                    val gridSquare = getGridSquare(latLngToMgrs(latLng))
-                    val stateData = getEnablingState(activeFragment.dataType, gridSquare)
-                    stateData.observe(this) { state ->
-                        if (isBgOperationEnabledSP) {
-                            if (state)
-                                activeFragment.measureValue()
-                        } else
-                            enableActionBtn(state)
+        if (activeFragment() is MeasurementFragmentInterface) { // No need to observe state in HomeFragment
+
+            val latLngLiveData = mapModule.mapHandler.currentLatLng
+            latLngLiveData.observe(this) { latLng ->
+                if (latLng != null) {
+                    val activeFragment = activeFragment()
+                    if(activeFragment is MeasurementFragmentInterface) {
+                        val gridSquare = getGridSquare(latLngToMgrs(latLng))
+                        val stateData = getEnablingState(activeFragment.dataType, gridSquare)
+                        stateData.observe(this) { state ->
+                            if (isBgOperationEnabledSP) {
+                                val currentLatLng = mapModule.mapHandler.currentLatLng.value!!
+                                val currentGridSquare = getGridSquare(latLngToMgrs(currentLatLng))
+                                if (toGridSquareString(currentGridSquare) == toGridSquareString(gridSquare)) {
+                                    if (state && !isMeasuring) {
+                                        activeFragment.measureValue()
+                                        //isMeasuring = true
+                                    }
+                                }
+                            } else {
+                                enableActionBtn(state)
+                            }
+
+                        }
                     }
                 }
             }
         }
-
     }
 
     private fun getEnablingState(dataType: DataType, gridSquare: Map<String, MGRS>)
@@ -439,7 +460,6 @@ class MainActivity : AppCompatActivity() {
     override fun onSupportNavigateUp(): Boolean {
         return navController.navigateUp() || super.onSupportNavigateUp()
     }
-
 
 
 }

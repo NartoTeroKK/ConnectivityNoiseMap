@@ -8,7 +8,6 @@ import androidx.preference.PreferenceManager
 import com.example.connectivitynoisemap.data.type.DataType
 import com.example.connectivitynoisemap.main.MainActivity
 import com.example.connectivitynoisemap.main.utils.GUI
-import com.example.connectivitynoisemap.main.utils.LatLngListener
 import com.example.connectivitynoisemap.main.utils.MapUtils.Companion.mgrsToLatLng
 import com.example.connectivitynoisemap.main.utils.ValueClass
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -115,15 +114,6 @@ class MapHandler(
 
     }
 
-    /*
-    private fun addLocationMarker(latLng: LatLng){
-        googleMap.addMarker(
-            MarkerOptions().position(latLng).title("Current Location")
-                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
-        )
-    }
-     */
-
     private fun createMapGrid(){
         googleMap.addTileOverlay(TileOverlayOptions().tileProvider(tileProvider))
     }
@@ -159,19 +149,9 @@ class MapHandler(
     }
 
     fun onLocationPermGranted(){
-        if (isLocationPermGranted){
-            enableGoogleMapLocation()
-            mLatLngListener.onLocationPermGranted()
-        }
+        enableGoogleMapLocation()
+        mLatLngListener.onLocationPermGranted()
     }
-
-    /*
-    fun onFragmentResumed(){
-        if (currentLatLng.value != null) {
-            mapCameraZoom(currentLatLng.value!!)
-        }
-    }
-     */
 
     fun onDestroy() {
         mLatLngListener.removeLocationUpdates()
@@ -237,21 +217,15 @@ class MapHandler(
         polygonOptions.fillColor(color)
         // Put polygon in the Map and draw it if absent
         // else uppdate the existing poligon
-        val polygon = polygonMap.get(mapSquare)
+        val polygon = polygonMap[mapSquare]
         if( polygon == null) {
             val newPolygon = googleMap.addPolygon(polygonOptions)
-            polygonMap.put(mapSquare, newPolygon)
+            polygonMap[mapSquare] = newPolygon
         }else{
             polygon.fillColor = color
             polygonMap.replace(mapSquare, polygon)
         }
 
-    }
-
-    fun checkIntegrity(){
-        for ((mapSquare, polygon) in polygonMap){
-
-        }
     }
 
 }

@@ -29,7 +29,6 @@ import com.example.connectivitynoisemap.main.utils.MapUtils
 import com.example.connectivitynoisemap.main.utils.ValueClass
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.launch
-import mil.nga.mgrs.MGRS
 
 class NoiseFragment :
     Fragment(),
@@ -59,17 +58,9 @@ class NoiseFragment :
     private val currentLatLng: LiveData<LatLng>
     by lazy { mapHandler.currentLatLng }
 
-    private val currentGridSquare : Map<String, MGRS>
-        get() {
-            return MapUtils.getGridSquare(MapUtils.latLngToMgrs(currentLatLng.value!!))
-        }
-
-    private val isLocationPermGranted: Boolean
-        get() = activity.isLocationPermGranted
-
-    override val activity: MainActivity
-        get() = requireActivity() as MainActivity
-
+    override val activity: MainActivity by lazy {
+        requireActivity() as MainActivity
+    }
     override val dataType: DataType = DataType.NOISE
 
     // METHODS
@@ -97,33 +88,6 @@ class NoiseFragment :
         // Set the mapView of the MapHandler
         val mapView = binding.mapViewContainer.mapView
         mapHandler.setMapView(mapView, savedInstanceState)
-        /*
-        currentLatLng.observe(viewLifecycleOwner){ latLng ->
-            if(latLng != null){
-                val gridSquare = MapUtils.getGridSquare(MapUtils.latLngToMgrs(latLng))
-                val stateData = activity.getButtonState(dataType, gridSquare)
-                stateData.observe(viewLifecycleOwner){ state ->
-                    if(activity.isBgOperationEnabledSP) {
-                        if (state)
-                            this.measureValue()
-                    }else
-                        activity.enableActionBtn(state)
-                }
-            }
-        }
-
-        if (currentLatLng.value != null) {
-            val stateData = activity.getButtonState(dataType, currentGridSquare)
-            stateData.observe(viewLifecycleOwner) { state ->
-                if(activity.isBgOperationEnabledSP) {
-                    if (state)
-                        this.measureValue()
-                }else
-                    activity.enableActionBtn(state)
-            }
-        }
-        */
-
 
         return binding.root
     }
@@ -133,11 +97,6 @@ class NoiseFragment :
         // Show the action button if background operations are disabled
         if(!activity.isBgOperationEnabledSP)
             activity.showActionBtn(true)
-    }
-
-    override fun onResume() {
-        super.onResume()
-        //mapHandler.onFragmentResumed()
     }
 
     override fun onDestroyView() {
@@ -160,84 +119,84 @@ class NoiseFragment :
     override fun onMapLoaded() {
         // Draw the map squares for this fragment and data type
         mapHandler.drawMapSquares(dataType)
+        if(activity.isBgOperationEnabledSP)
+            this.measureValue()
     }
 
     override fun measureValue(){
+        activity.isMeasuring = true
 
         activity.showProgressBar(true)
         activity.enableBottomNav(false)
         activity.enableActionBtn(false)
-        // acoustic Noise volume measurement
-        fragmentViewModel.measureNoise(activity.noiseMeasurementTimeSP)
 
-        val volumeLiveData = fragmentViewModel.volume
-        volumeLiveData.observe(viewLifecycleOwner){ volume ->
-            if (volume >= 0.0) {
-                fragmentViewModel.resetVolume()
+        val latLngData = currentLatLng
+        latLngData.observe(viewLifecycleOwner) { latLng ->
+            if(latLng != null) {
+                latLngData.removeObservers(viewLifecycleOwner)
 
-                activity.showProgressBar(false)
-                activity.enableBottomNav(true)
+                lifecycleScope.launch {
+                    val gridSquare = MapUtils.getGridSquare(MapUtils.latLngToMgrs(latLng))
 
-                val latLngData = currentLatLng
-                latLngData.observe(viewLifecycleOwner) { latLng ->
-                    if(latLng != null) {
-                        latLngData.removeObservers(viewLifecycleOwner)
+                    // Temporarily disable the action button
+                    activity.tempDisableActionBtn(
+                        dataType,
+                        gridSquare
+                    )
+                    // acoustic Noise volume measurement
+                    val volume = fragmentViewModel.measureNoise(activity.noiseMeasurementTimeSP)
 
-                        lifecycleScope.launch {
-                            val gridSquare = MapUtils.getGridSquare(MapUtils.latLngToMgrs(latLng))
+                    if (volume > 0.0) {
+                        activity.showProgressBar(false)
+                        activity.enableBottomNav(true)
 
-                            // Temporarily disable the action button
-                            activity.tempDisableActionBtn(
-                                dataType,
-                                gridSquare
+                        val remainingMeasurements =
+                            measurementViewModel.saveData(
+                                volume,
+                                latLng,
+                                activity.numMeasurementsSP
                             )
+                        if(remainingMeasurements > 0){
+                            GUI.showToast(
+                                requireContext(),
+                                "$remainingMeasurements measurements remaining",
+                                Toast.LENGTH_SHORT
+                            )
+                        } else { // remainingMeasurements <= 0
+                            // Process the data inserted
+                            GUI.showToast(
+                                requireContext(),
+                                "Measurement completed",
+                                Toast.LENGTH_SHORT
+                            )
+                            val avgValue =
+                                if(remainingMeasurements == 0)
+                                // Process the data in order to create the map square
+                                // for the first time in that grid square
+                                    measurementViewModel.processDataAndCreateSquare(
+                                        gridSquare,
+                                        activity.numMeasurementsSP
+                                    )
+                                else
+                                // map square already exists: already processed data inserted
+                                    measurementViewModel.getAvgValue(
+                                        gridSquare,
+                                        activity.numMeasurementsSP
+                                    )
 
+                            val signalClass =
+                                ValueClass.fromValueToClass(dataType, avgValue)
 
-                            val remainingMeasurements =
-                                measurementViewModel.saveData(
-                                    volume,
-                                    latLng,
-                                    activity.numMeasurementsSP
-                                )
-                            if(remainingMeasurements > 0){
-                                GUI.showToast(
-                                    requireContext(),
-                                    "$remainingMeasurements measurements remaining",
-                                    Toast.LENGTH_SHORT
-                                )
-                            } else { // remainingMeasurements <= 0
-                                // Process the data inserted
-                                GUI.showToast(
-                                    requireContext(),
-                                    "Measurement completed",
-                                    Toast.LENGTH_SHORT
-                                )
-                                val avgValue =
-                                    if(remainingMeasurements == 0)
-                                    // Process the data in order to create the map square
-                                    // for the first time in that grid square
-                                        measurementViewModel.processDataAndCreateSquare(
-                                            gridSquare,
-                                            activity.numMeasurementsSP
-                                        )
-                                    else
-                                    // map square already exists: already processed data inserted
-                                        measurementViewModel.getAvgValue(
-                                            gridSquare,
-                                            activity.numMeasurementsSP
-                                        )
-
-                                val signalClass =
-                                    ValueClass.fromValueToClass(dataType, avgValue)
-
-                                mapHandler.addOrUpdateMapSquare(dataType, gridSquare, signalClass)
-                            }
+                            mapHandler.addOrUpdateMapSquare(dataType, gridSquare, signalClass)
                         }
+                        activity.isMeasuring = false
+                    }else{
+                        activity.showProgressBar(false)
+                        activity.enableBottomNav(true)
+                        activity.isMeasuring = false
                     }
-
                 }
             }
         }
     }
-
 }

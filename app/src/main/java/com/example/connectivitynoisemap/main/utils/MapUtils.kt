@@ -42,7 +42,7 @@ class MapUtils {
                 "se" to gridSquare["se"].toString())
         }
 
-
+        /*
         fun isCurrentGridSquare(
             gridSquare:Map<String, MGRS>,
             currentMgrs: MGRS,
@@ -69,5 +69,7 @@ class MapUtils {
                     mgrs.northing isBetweenInclusive
                     gridSquare["sw"]!!.northing..gridSquare["nw"]!!.northing)
         }
+
+         */
     }
 }

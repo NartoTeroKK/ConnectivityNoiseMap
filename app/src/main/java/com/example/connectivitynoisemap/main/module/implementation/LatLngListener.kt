@@ -1,4 +1,4 @@
-package com.example.connectivitynoisemap.main.utils
+package com.example.connectivitynoisemap.main.module.implementation
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -43,7 +43,6 @@ class LatLngListener constructor(
     by lazy {
         object : LocationCallback(){
             override fun onLocationResult(locationResult: LocationResult) {
-                locationResult ?: return
                 for (location in locationResult.locations) {
                     _currentLatLng.postValue(locationToLatLng(location))
                 }
@@ -71,8 +70,8 @@ class LatLngListener constructor(
     private fun initLocationUpdates() {
 
         val locationRequest = LocationRequest()
-        locationRequest.interval = 500
-        locationRequest.fastestInterval = 250
+        locationRequest.interval = 1000
+        locationRequest.fastestInterval = 500
         locationRequest.priority = Priority.PRIORITY_HIGH_ACCURACY
 
         fusedLocationProviderClient.requestLocationUpdates(
@@ -81,23 +80,6 @@ class LatLngListener constructor(
             Looper.getMainLooper()
         )
     }
-
-    /*
-    @SuppressLint("MissingPermission")
-    fun getCurrentLatLng() {
-        val location = fusedLocationProviderClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY,null)
-        location.addOnSuccessListener{ loc ->
-            if (loc != null ) {
-                val latLng = locationToLatLng(loc)
-                _currentLatLng.postValue(latLng) // update the LiveData
-            }
-        }
-        location.addOnFailureListener { e ->
-            Log.e("ERROR", e.message.toString())
-            e.printStackTrace()
-        }
-    }
-     */
 
     private fun locationToLatLng(location: Location): LatLng {
         return LatLng(location.latitude, location.longitude)
