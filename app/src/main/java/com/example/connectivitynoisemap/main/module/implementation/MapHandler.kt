@@ -89,9 +89,7 @@ class MapHandler(
 
     override fun onMapReady(map: GoogleMap) {
         googleMap = map
-        //if(!isMapReady)
         listener?.onMapLoaded()
-        //isMapReady = true
         configGoogleMap()
 
         if(!isLocationEnabled) {
@@ -100,11 +98,9 @@ class MapHandler(
             }
         }
         if( currentLatLng.value != null) {
-            //addLocationMarker(currentLatLng.value!!)
             mapCameraZoom(currentLatLng.value!!)
         }else{
             mLatLngListener.currentLatLng.observe(activity) { latLng ->
-                //addLocationMarker(latLng)
                 if(!isZoomedIn) {
                     mapCameraZoom(latLng)
                     isZoomedIn = true
@@ -216,7 +212,7 @@ class MapHandler(
         polygonOptions.strokeWidth(1f)
         polygonOptions.fillColor(color)
         // Put polygon in the Map and draw it if absent
-        // else uppdate the existing poligon
+        // else update the existing polygon
         val polygon = polygonMap[mapSquare]
         if( polygon == null) {
             val newPolygon = googleMap.addPolygon(polygonOptions)

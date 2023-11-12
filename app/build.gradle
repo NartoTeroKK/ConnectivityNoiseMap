@@ -56,12 +56,6 @@ dependencies {
     implementation 'androidx.preference:preference-ktx:1.2.1'
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.2'
     implementation 'com.google.firebase:firebase-perf:20.5.0'
-    //implementation 'androidx.activity:activity-compose:1.7.2'
-    //implementation platform('androidx.compose:compose-bom:2023.03.00')
-    //implementation 'androidx.compose.ui:ui'
-    //implementation 'androidx.compose.ui:ui-graphics'
-    //implementation 'androidx.compose.ui:ui-tooling-preview'
-    //implementation 'androidx.compose.material3:material3'
     androidTestImplementation  ("androidx.test.ext:junit:1.1.5")
     androidTestImplementation  ("androidx.test.espresso:espresso-core:3.5.1")
     testImplementation ("junit:junit:4.13.2")
@@ -69,13 +63,9 @@ dependencies {
 
     // Kotlin components
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    //androidTestImplementation platform('androidx.compose:compose-bom:2023.03.00')
-    //androidTestImplementation 'androidx.compose.ui:ui-test-junit4'
     def coroutines_version = "1.7.1"
     api "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_version"
     api "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines_version"
-    //debugImplementation 'androidx.compose.ui:ui-tooling'
-    //debugImplementation 'androidx.compose.ui:ui-test-manifest'
 
     // Lifecycle
     def lifecycle_version = "2.6.1"
@@ -83,7 +73,6 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-common-java8:${lifecycle_version}"
     implementation "androidx.lifecycle:lifecycle-livedata-ktx:${lifecycle_version}"
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:${lifecycle_version}"
-    //implementation("androidx.lifecycle:lifecycle-viewmodel-compose:$lifecycle_version")
 
     // Navigation
     //def navigation_version = "2.6.0"
@@ -101,7 +90,6 @@ dependencies {
     implementation ('com.google.android.gms:play-services-maps:18.2.0')
     implementation('com.google.android.gms:play-services-location:21.0.1')
     implementation 'com.google.android.material:material:1.9.0'
-    //implementation 'com.google.android.gms:play-services:12.0.1'
     implementation 'com.google.android.gms:play-services-location-license:12.0.1'
     implementation 'com.google.android.gms:play-services-maps-license:12.0.1'
 
@@ -110,9 +98,5 @@ dependencies {
 
     //Picasso
     implementation 'com.squareup.picasso:picasso:2.8'
-    // Glide
-    //def glide = "4.16.0"
-    //implementation "com.github.bumptech.glide:glide:$glide"
-    //ksp ("com.github.bumptech.glide:compiler:$glide")
 }
 

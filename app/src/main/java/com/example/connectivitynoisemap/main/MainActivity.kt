@@ -214,9 +214,6 @@ class MainActivity : AppCompatActivity() {
                 )
             }
         withContext(Dispatchers.Default){
-            withContext(Dispatchers.Main) {
-                showProgressBar(true)
-            }
 
             for (dataType in DataType.values()){
 
@@ -246,9 +243,6 @@ class MainActivity : AppCompatActivity() {
                 checkIntegrity(dataType, cornersAvgValueList)
             }
 
-            withContext(Dispatchers.Main) {
-                showProgressBar(false)
-            }
         }
     }
 
