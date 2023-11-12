@@ -13,17 +13,15 @@ import androidx.lifecycle.ViewModel
 @Suppress("DEPRECATION")
 class MobileNetworkViewModel : ViewModel() {
 
-    private lateinit var mTelephonyManager: TelephonyManager
     private lateinit var mPhoneStateListener: MyPhoneStateListener
 
     private val isMobileDataEnabled: Boolean
-        get() = mTelephonyManager.dataState == TelephonyManager.DATA_CONNECTED
+        get() = mPhoneStateListener.telephonyManager.dataState == TelephonyManager.DATA_CONNECTED
 
     val mobileRssi: Double
         get() = getMobileRsii().toDouble()
 
     fun lateInit(context: Context) {
-        mTelephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
         mPhoneStateListener = MyPhoneStateListener(context)
     }
 
@@ -49,7 +47,9 @@ class MobileNetworkViewModel : ViewModel() {
                 CellSignalStrengthLte::class.java -> {
                     val signalLte =
                         signal as CellSignalStrengthLte
-                    this.signalStrength = signalLte.rssi
+                    this.signalStrength =
+                        if (signalLte.rssi == Int.MAX_VALUE) signalLte.rsrp
+                        else  signalLte.rssi
                 }
                 CellSignalStrengthWcdma::class.java -> {
                     val signalWcdma =
